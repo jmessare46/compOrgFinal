@@ -74,3 +74,4 @@ class Grid:
     # Goes through line and returns what the instruction is and what each operation is - Kevin
     def stripLine( self ):
         return
+    
