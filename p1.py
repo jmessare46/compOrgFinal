@@ -16,14 +16,3 @@ for inst in range (0,10):
     for col in range (0,16):
         list.append()
     grid.append()
-
-
-
-register = new register()
-
-# Check for hazards and insert nop into grid
-haz.checkHazards( register, dependencies, grid )
-
-# Prints out the pipeline state
-printpipe.printPipeline( registers, dependencies, grid )
-
