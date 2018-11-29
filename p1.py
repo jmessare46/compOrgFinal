@@ -1,18 +1,41 @@
 import grid
+import sys
 
-# Step 1: Read in the file
+# Check proper number of params were passed to the program
+if len(sys.argv) != 3:
 
-# Step 2: Populate grid
+    # Exit with error if wrong number of parameters were passed
+    exit(1)
 
-# Step 3: Check for hazards
+# Assign params to variables
+forwardingMode = sys.argv[1]
+inFileName = sys.argv[2]
 
-# Step 4: Loop through and print each line
+# Instantiate Grid object
+grid = grid.Grid()
+
+# Step 1: Read lines into grid
+with open(inFileName) as fp:
+
+    for line in fp:
+
+        # Strip newline
+        line = line.rstrip('\n')
+
+        # Insert into grid
+        grid.insertLine(line)
+
+# Step 2: Run hazard correction routine
+grid.resolveHazards(forwardingMode)
+
+# Step 3: Print all output
+grid.runSimulation()
 
 # Reads in input for printing operation
-# TODO: 10 needs to be set to number of input lines
-grid = []
-for inst in range (0,10):
-    list = []
-    for col in range (0,16):
-        list.append()
-    grid.append()
+# # TODO: 10 needs to be set to number of input lines
+# grid = []
+# for inst in range (0,10):
+#     list = []
+#     for col in range (0,16):
+#         list.append()
+#     grid.append()

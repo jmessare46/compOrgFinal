@@ -57,42 +57,49 @@ class Grid:
             "v1": 0
         }
 
-        # Insert line into grid - Sebastian
-        # Inputs: line to be inserted into grid
-        # Outputs: None
-        def insertLine(line):
+    # Main loop that prints out every iteration of output by calling printGrid in a loop
+    # Inputs: None
+    # Outputs: Prints the entire output for the program
+    def runSimulation(self):
 
-            pass
+        pass
 
-        # Prints out in the grid - Joe
-        # Input: cycle - The cycle number we are print (to determine visibility)
-        # Outputs: Prints the output for this cycle of the simulation
-        def printGrid(cycle):
+    # Insert line into grid - Sebastian
+    # Inputs: line to be inserted into grid
+    # Outputs: Updates 2d grid and numOfRows
+    def insertLine(self, line):
 
-            pass
+        pass
 
-        # Shifts arrays around to insert nop where needed
-        # Inputs: None
-        # Outputs: Updates grid to correct for hazards
-        def resolveHazard():
+    # Prints out a single cycle of the grid out - Joe
+    # Input: cycle - The cycle number we are print (to determine visibility)
+    # Outputs: Prints the output for this cycle of the simulation
+    def printGrid(self, cycle):
 
-            pass
+        pass
 
-        # Goes through line and returns what the instruction is and what each operation is - Kevin
-        # Inputs: instruction string
-        #
-        # Outputs:
-        #           For instructions in the form of "instruction a,b,c"
-        #           output1 - instruction
-        #           output2 - operand a
-        #           output3 - operand b
-        #           output4 - operand c
-        #
-        #           For instructions in the form of "instruction $a,offset($b)"
-        #           output1 - instruction
-        #           output2 - operand a
-        #           output3 - operand b
-        #           output4 - NoneType (since there are only two registers used in this case)
-        def stripLine(instruction):
+    # Shifts arrays around to insert nop where needed
+    # Inputs: None
+    # Outputs: Updates grid and numOfRows to correct for hazards
+    def resolveHazards(self, forwardingMode):
 
-            pass
+        pass
+
+    # Goes through line and returns what the instruction is and what each operation is - Kevin
+    # Inputs: instruction string
+    #
+    # Outputs:
+    #           For instructions in the form of "instruction a,b,c"
+    #           output1 - instruction
+    #           output2 - operand a
+    #           output3 - operand b
+    #           output4 - operand c
+    #
+    #           For instructions in the form of "instruction $a,offset($b)"
+    #           output1 - instruction
+    #           output2 - operand a
+    #           output3 - operand b
+    #           output4 - NoneType (since there are only two registers used in this case)
+    def stripLine(self, instruction):
+
+        pass
