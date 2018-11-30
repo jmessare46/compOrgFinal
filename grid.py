@@ -69,6 +69,40 @@ class Grid:
         # Print bar
         print('-' * 82)
 
+    # Setup grid row for printing where "IF" is equal to the current cycle
+    def initNewGridRow(self, instruction):
+
+        row = []
+        count = 0
+
+        # First append instruction into index 0
+        row.append(instruction)
+
+        count += 1
+
+        # Next append '.' and 'IF' for remaining indexes
+        while count <= 16:
+
+            if count == self.cycle:
+
+                row.append('IF')
+
+            else:
+
+                row.append('.')
+
+            count += 1
+
+        # Insert new row into grid
+        self.grid.append(row)
+
+    # Advance grid row to next pipeline cycle
+    # Inputs: A grid row index to operate on
+    # Outputs: Updates that grid row to next pipeline cycle
+    def advanceGridRow(self, gridRowIndex):
+
+        pass
+
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
     # Outputs: Prints the entire output for the program
@@ -99,13 +133,18 @@ class Grid:
 
                 # else no dependencies execute instruction
 
-            # Update instructionIndex to next instruction to run
-            # TODO: instructionIndex should be set based on if there is a branch or not
-            self.instructionIndex += 1
+            # Append line for this cycle to grid if there are still instructions left to add
+            if self.instructionIndex != len(self.instructions):
 
-            # Append line for this cycle to grid
+                self.initNewGridRow(self.instructions[self.instructionIndex])
+
+                # Update instructionIndex to next instruction to run
+                # TODO: instructionIndex should be set based on if there is a branch or not
+                self.instructionIndex += 1
 
             # Print grid
+            self.printGrid()
+            self.printBar()
 
             # Dec depends
             for i in self.depends:
@@ -114,10 +153,17 @@ class Grid:
 
                     self.depends[i] -= 1
 
+            # Inc cycle counter
+            self.cycle += 1
+
             # End of while loop iteration, move to next iteration or break out
-            if self.instructionIndex == len(self.instructions):
+            # TODO: correct breakout condition, should be if last row in grid contains 'WB' or 16 cycles have passed
+            if self.cycle == 17:
 
                 break
+
+        # Print end of simulation message
+        print("END OF SIMULATION")
 
     # Insert line into instruction list
     # Inputs: line to be inserted into instruction list
@@ -129,20 +175,16 @@ class Grid:
     # Prints out a single cycle of the grid out - Joe
     # Input: cycle - The cycle number we are print (to determine visibility)
     # Outputs: Prints the output for this cycle of the simulation
-    def printGrid(self, cycle):
+    def printGrid(self):
 
-        pass
+        for row in self.grid:
 
-    # Shifts arrays around to insert nop where needed
-    # Inputs: None
-    # Outputs: Updates grid and numOfRows to correct for hazards
-    def resolveHazards(self, forwardingMode):
+            # TODO: Update code to print rows with proper formatting and also print register values
+            print(row)
 
-        pass
 
     # Goes through line and returns what the instruction is and what each operation is - Kevin
     # Inputs: instruction string
-    #
     # Outputs:
     #           For instructions in the form of "instruction a,b,c"
     #           output1 - instruction
