@@ -1,8 +1,12 @@
 class Grid:
-    def __init__(self):
-        self.instructions = []      # A list containing the set of instructions
-        self.grid = []              # 2d array which holds each row to be printed
-        self.depends = {             # Dictionary which contains number of dependencies on each register
+    def __init__(self, forwardingMode):
+        self.forwardingMode = forwardingMode    # Forwarding mode for simulation
+        self.instructions = []                  # A list containing the set of instructions
+        self.grid = []                          # 2d array which holds each row to be printed
+        self.instructionIndex = 0               # Keeps track of which instruction we are running
+                                                #  (need to maintain for branches)
+        self.cycle = 1                          # Keeps track of current cycle of simulation
+        self.depends = {                        # Dictionary which contains number of dependencies on each register
             "$a0": 0,
             "$a1": 0,
             "$a2": 0,
@@ -29,7 +33,7 @@ class Grid:
             "$v0": 0,
             "$v1": 0
         }
-        self.values = {              # Dictionary which contains the value stored in each register
+        self.values = {                     # Dictionary which contains the value stored in each register
             "$a0": 0,
             "$a1": 0,
             "$a2": 0,
@@ -56,13 +60,64 @@ class Grid:
             "$v0": 0,
             "$v1": 0
         }
+
+    # Prints a bar of '-' to output
+    # Inputs: None
+    # Outputs: A bar of '-' will be printed to standard output
+    def printBar(self):
+
+        # Print bar
+        print('-' * 82)
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
     # Outputs: Prints the entire output for the program
     def runSimulation(self):
 
-        pass
+        # Print simulation header
+        if self.forwardingMode == 'N':
+
+            print("START OF SIMULATION (no forwarding)")
+
+        else:
+
+            print("START OF SIMULATION (forwarding)")
+
+        self.printBar()
+
+        while True:
+
+            # Add a pipeline cycle to previously ran lines already in grid
+
+                # If an instruction has reached WB stage then update 'a' register value for that instruction
+
+            # Parse instruction and decide if any dependencies exist
+
+                # Update dependencies on 'a' register
+
+                # If dependencies exist on 'b' or 'c' register then insert bubble and nop
+
+                # else no dependencies execute instruction
+
+            # Update instructionIndex to next instruction to run
+            # TODO: instructionIndex should be set based on if there is a branch or not
+            self.instructionIndex += 1
+
+            # Append line for this cycle to grid
+
+            # Print grid
+
+            # Dec depends
+            for i in self.depends:
+
+                if self.depends[i] > 0:
+
+                    self.depends[i] -= 1
+
+            # End of while loop iteration, move to next iteration or break out
+            if self.instructionIndex == len(self.instructions):
+
+                break
 
     # Insert line into instruction list
     # Inputs: line to be inserted into instruction list

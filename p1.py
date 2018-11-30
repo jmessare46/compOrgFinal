@@ -12,9 +12,9 @@ forwardingMode = sys.argv[1]
 inFileName = sys.argv[2]
 
 # Instantiate Grid object
-grid = grid.Grid()
+grid = grid.Grid(forwardingMode)
 
-# Step 1: Read lines into grid
+# Read lines into grid
 with open(inFileName) as fp:
 
     for line in fp:
@@ -25,8 +25,5 @@ with open(inFileName) as fp:
         # Insert into grid
         grid.insertLine(line)
 
-# Step 2: Run hazard correction routine
-grid.resolveHazards(forwardingMode)
-
-# Step 3: Print all output
+# Print all output
 grid.runSimulation()
