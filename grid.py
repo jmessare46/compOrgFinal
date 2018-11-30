@@ -1,8 +1,8 @@
 class Grid:
     def __init__(self):
+        self.instructions = []      # A list containing the set of instructions
         self.grid = []              # 2d array which holds each row to be printed
-        self.numOfRows = 0          # contains the number of rows in grid
-        self.depend = {             # Dictionary which contains number of dependencies on each register
+        self.depends = {             # Dictionary which contains number of dependencies on each register
             "$a0": 0,
             "$a1": 0,
             "$a2": 0,
@@ -29,7 +29,7 @@ class Grid:
             "$v0": 0,
             "$v1": 0
         }
-        self.value = {              # Dictionary which contains the value stored in each register
+        self.values = {              # Dictionary which contains the value stored in each register
             "$a0": 0,
             "$a1": 0,
             "$a2": 0,
@@ -64,12 +64,12 @@ class Grid:
 
         pass
 
-    # Insert line into grid - Sebastian
-    # Inputs: line to be inserted into grid
-    # Outputs: Updates 2d grid and numOfRows
+    # Insert line into instruction list
+    # Inputs: line to be inserted into instruction list
+    # Outputs: updates instruction list
     def insertLine(self, line):
 
-        pass
+        self.instructions.append(line)
 
     # Prints out a single cycle of the grid out - Joe
     # Input: cycle - The cycle number we are print (to determine visibility)
