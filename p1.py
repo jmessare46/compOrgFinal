@@ -30,12 +30,3 @@ grid.resolveHazards(forwardingMode)
 
 # Step 3: Print all output
 grid.runSimulation()
-
-# Reads in input for printing operation
-# # TODO: 10 needs to be set to number of input lines
-# grid = []
-# for inst in range (0,10):
-#     list = []
-#     for col in range (0,16):
-#         list.append()
-#     grid.append()

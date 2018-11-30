@@ -3,58 +3,58 @@ class Grid:
         self.grid = []              # 2d array which holds each row to be printed
         self.numOfRows = 0          # contains the number of rows in grid
         self.depend = {             # Dictionary which contains number of dependencies on each register
-            "a0": 0,
-            "a1": 0,
-            "a2": 0,
-            "a3": 0,
-            "s0": 0,
-            "s1": 0,
-            "s2": 0,
-            "s3": 0,
-            "s4": 0,
-            "s5": 0,
-            "s6": 0,
-            "s7": 0,
-            "t0": 0,
-            "t1": 0,
-            "t2": 0,
-            "t3": 0,
-            "t4": 0,
-            "t5": 0,
-            "t6": 0,
-            "t7": 0,
-            "t8": 0,
-            "t9": 0,
-            "zero": 0,
-            "v0": 0,
-            "v1": 0
+            "$a0": 0,
+            "$a1": 0,
+            "$a2": 0,
+            "$a3": 0,
+            "$s0": 0,
+            "$s1": 0,
+            "$s2": 0,
+            "$s3": 0,
+            "$s4": 0,
+            "$s5": 0,
+            "$s6": 0,
+            "$s7": 0,
+            "$t0": 0,
+            "$t1": 0,
+            "$t2": 0,
+            "$t3": 0,
+            "$t4": 0,
+            "$t5": 0,
+            "$t6": 0,
+            "$t7": 0,
+            "$t8": 0,
+            "$t9": 0,
+            "$zero": 0,
+            "$v0": 0,
+            "$v1": 0
         }
         self.value = {              # Dictionary which contains the value stored in each register
-            "a0": 0,
-            "a1": 0,
-            "a2": 0,
-            "a3": 0,
-            "s0": 0,
-            "s1": 0,
-            "s2": 0,
-            "s3": 0,
-            "s4": 0,
-            "s5": 0,
-            "s6": 0,
-            "s7": 0,
-            "t0": 0,
-            "t1": 0,
-            "t2": 0,
-            "t3": 0,
-            "t4": 0,
-            "t5": 0,
-            "t6": 0,
-            "t7": 0,
-            "t8": 0,
-            "t9": 0,
-            "zero": 0,
-            "v0": 0,
-            "v1": 0
+            "$a0": 0,
+            "$a1": 0,
+            "$a2": 0,
+            "$a3": 0,
+            "$s0": 0,
+            "$s1": 0,
+            "$s2": 0,
+            "$s3": 0,
+            "$s4": 0,
+            "$s5": 0,
+            "$s6": 0,
+            "$s7": 0,
+            "$t0": 0,
+            "$t1": 0,
+            "$t2": 0,
+            "$t3": 0,
+            "$t4": 0,
+            "$t5": 0,
+            "$t6": 0,
+            "$t7": 0,
+            "$t8": 0,
+            "$t9": 0,
+            "$zero": 0,
+            "$v0": 0,
+            "$v1": 0
         }
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
@@ -94,12 +94,12 @@ class Grid:
     #           output2 - operand a
     #           output3 - operand b
     #           output4 - operand c
-    #
-    #           For instructions in the form of "instruction $a,offset($b)"
-    #           output1 - instruction
-    #           output2 - operand a
-    #           output3 - operand b
-    #           output4 - NoneType (since there are only two registers used in this case)
     def stripLine(self, instruction):
 
-        pass
+        # Perform first split to split instruction from registers
+        instr, operands = instruction.split(' ')
+
+        # Second split get each register
+        a, b, c = operands.split(',')
+
+        return instr, a, b, c
