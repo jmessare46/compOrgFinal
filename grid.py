@@ -69,7 +69,19 @@ class Grid:
         # Print bar
         print('-' * 82)
 
+    def printCPUCyclesLine(self):
+
+        print("{0: <20}".format("CPU Cycles ===>"), end='')
+
+        for i in range(1, 17):
+
+            print("{0: <4}".format(i), end='')
+
+        print()
+
     # Setup grid row for printing where "IF" is equal to the current cycle
+    # Inputs: Takes the instruction from the instructions list
+    # Outputs: Places instruction with its 16 pipeline stage cycles into a list and inserts them into the grid object
     def initNewGridRow(self, instruction):
 
         row = []
@@ -96,12 +108,71 @@ class Grid:
         # Insert new row into grid
         self.grid.append(row)
 
+    # Finds the index of the final instance of target in row
+    # Inputs: row - list to search
+    #           target - value to search for
+    # Outputs: returns index of last encountered target in row
+    def getIndex(self, row, target):
+
+        index = 0
+
+        for i, item in enumerate(row):
+
+            if item == target:
+
+                index = i
+
+        return index
+
     # Advance grid row to next pipeline cycle
     # Inputs: A grid row index to operate on
     # Outputs: Updates that grid row to next pipeline cycle
+    #           Returns bool indicating if instruction has reached "WB" stage
     def advanceGridRow(self, gridRowIndex):
 
-        pass
+        retValue = False
+
+        # Only operate if row has not already reached "WB" stage
+        if "WB" not in self.grid[gridRowIndex]:
+
+            # Remove last element of row
+            del self.grid[gridRowIndex][16]
+
+            if "MEM" in self.grid[gridRowIndex]:
+
+                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "MEM") + 1, "WB")
+
+                # Instruction has advanced to WB stage
+                retValue = True
+
+            elif "EX" in self.grid[gridRowIndex]:
+
+                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX") + 1, "MEM")
+
+            elif "ID" in self.grid[gridRowIndex]:
+
+                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
+
+            elif "IF" in self.grid[gridRowIndex]:
+
+                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "IF") + 1, "ID")
+
+        return retValue
+
+    # Executes the instruction and updates any registers
+    def executeInstruction(self, instruction):
+
+        inst, a, b, c = self.stripLine(instruction)
+
+        if inst == "add":
+
+            self.values[a] = self.values[b] + self.values[c]
+
+        elif inst == "addi":
+
+            self.values[a] = self.values[b] + int(c)
+
+        # TODO: Finish implementing other instructions
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
@@ -122,16 +193,22 @@ class Grid:
         while True:
 
             # Add a pipeline cycle to previously ran lines already in grid
+            for i in range(0, len(self.grid)):
+
+                # Advance each row in grid to next pipeline stage and capture if the row has reached "WB"
+                wbReached = self.advanceGridRow(i)
 
                 # If an instruction has reached WB stage then update 'a' register value for that instruction
+                if wbReached:
 
+                    self.executeInstruction(self.grid[i][0])
+
+            # TODO: Implement dependency scheme
             # Parse instruction and decide if any dependencies exist
 
                 # Update dependencies on 'a' register
 
                 # If dependencies exist on 'b' or 'c' register then insert bubble and nop
-
-                # else no dependencies execute instruction
 
             # Append line for this cycle to grid if there are still instructions left to add
             if self.instructionIndex != len(self.instructions):
@@ -143,6 +220,7 @@ class Grid:
                 self.instructionIndex += 1
 
             # Print grid
+            self.printCPUCyclesLine()
             self.printGrid()
             self.printBar()
 
@@ -157,8 +235,8 @@ class Grid:
             self.cycle += 1
 
             # End of while loop iteration, move to next iteration or break out
-            # TODO: correct breakout condition, should be if last row in grid contains 'WB' or 16 cycles have passed
-            if self.cycle == 17:
+            # Breakout condition - ran all 16 cycles or last instruction has reached "WB"
+            if self.cycle == 17 or "WB" in self.grid[len(self.grid) - 1]:
 
                 break
 
@@ -179,9 +257,14 @@ class Grid:
 
         for row in self.grid:
 
-            # TODO: Update code to print rows with proper formatting and also print register values
-            print(row)
+            print("{0: <20}".format(row[0]), end='')
 
+            for i in range(1, 17):
+                print("{0: <4}".format(row[i]), end='')
+
+            print()
+
+        # TODO: Print registers
 
     # Goes through line and returns what the instruction is and what each operation is - Kevin
     # Inputs: instruction string
