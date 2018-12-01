@@ -264,7 +264,22 @@ class Grid:
 
             print()
 
-        # TODO: Print registers
+        regSet = ["$s0","$s1","$s2","$s3","$s4","$s5","$s6","$s7",
+                  "$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7","$t8","$t9"]
+
+        for i in range(len(regSet)):
+
+            # If just printed 4th column print a new line
+            if i % 4 == 0:
+
+                print()
+
+            strToPrint = "{0} = {1}".format(regSet[i], self.values[regSet[i]])
+
+            print("{0: <20}".format(strToPrint), end='')
+
+        print()
+
 
     # Goes through line and returns what the instruction is and what each operation is - Kevin
     # Inputs: instruction string
