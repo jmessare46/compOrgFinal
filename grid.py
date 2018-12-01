@@ -172,6 +172,22 @@ class Grid:
 
             self.values[a] = self.values[b] + int(c)
 
+        elif inst == "and":
+
+            self.values[a] = self.values[b] & self.values[c]
+
+        elif inst == "andi":
+
+            self.values[a] = self.values[b] & int(c)
+
+        elif inst == "or":
+
+            self.values[a] = self.values[b] | self.values[c]
+
+        elif inst == "ori":
+
+            self.values[a] = self.values[b] | int(c)
+
         # TODO: Finish implementing other instructions
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
@@ -203,17 +219,20 @@ class Grid:
 
                     self.executeInstruction(self.grid[i][0])
 
-            # TODO: Implement dependency scheme
-            # Parse instruction and decide if any dependencies exist
-
-                # Update dependencies on 'a' register
-
-                # If dependencies exist on 'b' or 'c' register then insert bubble and nop
-
             # Append line for this cycle to grid if there are still instructions left to add
             if self.instructionIndex != len(self.instructions):
 
+                # Insert instruction into grid
                 self.initNewGridRow(self.instructions[self.instructionIndex])
+
+                # Parse instruction and decide if any dependencies exist
+                inst, a, b, c = self.stripLine(self.instructions[self.instructionIndex])
+
+                # Update dependencies on 'a' register
+                self.depends[a] = 3
+
+                # TODO: Implement dependency scheme
+                # If dependencies exist on 'b' or 'c' register then insert bubble and nop
 
                 # Update instructionIndex to next instruction to run
                 # TODO: instructionIndex should be set based on if there is a branch or not
@@ -250,7 +269,7 @@ class Grid:
 
         self.instructions.append(line)
 
-    # Prints out a single cycle of the grid out - Joe
+    # Prints out a single cycle of the grid out
     # Input: cycle - The cycle number we are print (to determine visibility)
     # Outputs: Prints the output for this cycle of the simulation
     def printGrid(self):
@@ -280,8 +299,7 @@ class Grid:
 
         print()
 
-
-    # Goes through line and returns what the instruction is and what each operation is - Kevin
+    # Goes through line and returns what the instruction is and what each operation is
     # Inputs: instruction string
     # Outputs:
     #           For instructions in the form of "instruction a,b,c"
