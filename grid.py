@@ -162,6 +162,11 @@ class Grid:
     # Executes the instruction and updates any registers
     def executeInstruction(self, instruction):
 
+        # Do nothing is this is a nop instruction
+        if instruction == "nop":
+
+            return
+
         inst, a, b, c = self.stripLine(instruction)
 
         if inst == "add":
@@ -189,6 +194,27 @@ class Grid:
             self.values[a] = self.values[b] | int(c)
 
         # TODO: Finish implementing other instructions
+
+    # Get the number of dependencies on a register
+    # Inputs: reg - Register to get the dependencies of
+    # Outputs: returns number of clock cycles until dependencies is cleared
+    #           or 0 if the 'reg' passed was actually a constant
+    def getDependency(self, reg):
+
+        if reg not in self.depends:
+
+            return 0
+
+        else:
+
+            return self.depends[reg]
+
+    # Insert a nop instruction into the grid
+    # Inputs: None
+    # Outputs: Inserts a nop instruction at the proper space in the grid
+    def insertNop(self):
+
+        self.initNewGridRow("nop")
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
@@ -222,17 +248,20 @@ class Grid:
             # Append line for this cycle to grid if there are still instructions left to add
             if self.instructionIndex != len(self.instructions):
 
-                # Insert instruction into grid
-                self.initNewGridRow(self.instructions[self.instructionIndex])
-
                 # Parse instruction and decide if any dependencies exist
                 inst, a, b, c = self.stripLine(self.instructions[self.instructionIndex])
 
                 # Update dependencies on 'a' register
                 self.depends[a] = 3
 
-                # TODO: Implement dependency scheme
                 # If dependencies exist on 'b' or 'c' register then insert bubble and nop
+                if self.getDependency(b) > 0 or self.getDependency(c) > 0:
+
+                    # TODO: nop insertion needs some work to get inserted at the right spot (could possibly move this logic inside advanceGridRow())
+                    self.insertNop()
+
+                # Insert instruction into grid
+                self.initNewGridRow(self.instructions[self.instructionIndex])
 
                 # Update instructionIndex to next instruction to run
                 # TODO: instructionIndex should be set based on if there is a branch or not
