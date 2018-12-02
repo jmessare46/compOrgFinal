@@ -104,6 +104,7 @@ class Grid:
     #         possibleDep2 - The 'c' register
     # Outputs: Returns a bool indicating if a dependency exist
     # TODO: TEST this function
+    # TODO: Account for nop here
     def checkForDependency(self, gridRowIndex, possibleDep1, possibleDep2):
 
         retVal = False
@@ -153,7 +154,8 @@ class Grid:
             inst, a, b, c = self.stripLine(self.grid[gridRowIndex][0])
 
             # Remove last element of row
-            del self.grid[gridRowIndex][16]
+            # TODO: Use this when the bubble is created
+            # del self.grid[gridRowIndex][16]
 
             if "MEM" in self.grid[gridRowIndex]:
 
@@ -170,12 +172,30 @@ class Grid:
 
                 # Before advancing instruction to EX check previous two instructions to see if dependency exists
                 # TODO: Check for dependencies here using checkForDependency() and insert nops and bubbles if needed
+                # TODO: insert nop here
 
+                dep = self.checkForDependency(gridRowIndex, b, c)
+                # If this is the first time insert a nop
+                if(dep and "nop" not in self.grid[gridRowIndex]):
+                    tempLine = list.copy(self.grid[gridRowIndex])
+                    tempLine[0] = "nop"
+                    self.grid.insert(gridRowIndex, tempLine)
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "*")
+                elif(dep or "nop" in self.grid[gridRowIndex]):
+                    if(self.grid[gridRowIndex].count("*") >= 3):
+                        retValue = True
+                    else:
+                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+                else:
+                    # Stall operation
+                    index = self.getIndex(self.grid[gridRowIndex], "ID") + 1
+                    if(("nop" in self.grid[gridRowIndex-1]) and (self.grid[gridRowIndex-1][index] == "*")):
+                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "ID")
+
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
                 # if checkForDependency() returns true so insert nop and bubbles into any rows after
 
                 # else checkForDependency() returns false just proceed as normal
-
-                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
 
             elif "IF" in self.grid[gridRowIndex]:
 
@@ -351,9 +371,14 @@ class Grid:
     def stripLine(self, instruction):
 
         # Perform first split to split instruction from registers
-        instr, operands = instruction.split(' ')
+        if("nop" not in instruction):
+            instr, operands = instruction.split(' ')
 
-        # Second split get each register
-        a, b, c = operands.split(',')
+            # Second split get each register
+            a, b, c = operands.split(',')
+        else:
+            a, b, c = " ", " ", " "
+            instr = "nop"
+
 
         return instr, a, b, c
