@@ -193,6 +193,26 @@ class Grid:
 
             self.values[a] = self.values[b] | int(c)
 
+        elif inst == "slt":
+            if(self.values[b] < self.values[c]):
+                self.values[a] = 1
+            else:
+                self.values[a] = 0
+
+        elif inst == "slti":
+            if(self.values[b] < int(c)):
+                self.values[a] = 1
+            else:
+                self.values[a] = 0
+
+        elif inst == "beq":
+            return
+            # TODO: Make this work
+
+        elif inst == "bne":
+            return
+            # TODO: Make this work.
+
         # TODO: Finish implementing other instructions
 
     # Get the number of dependencies on a register
