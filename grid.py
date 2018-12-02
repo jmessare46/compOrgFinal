@@ -171,6 +171,10 @@ class Grid:
                 # Before advancing instruction to EX check previous two instructions to see if dependency exists
                 # TODO: Check for dependencies here using checkForDependency() and insert nops and bubbles if needed
 
+                # if checkForDependency() returns true so insert nop and bubbles into any rows after
+
+                # else checkForDependency() returns false just proceed as normal
+
                 self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
 
             elif "IF" in self.grid[gridRowIndex]:
@@ -235,12 +239,13 @@ class Grid:
 
         # TODO: Finish implementing other instructions
 
+    # TODO: Implement this function
     # Insert a nop instruction into the grid
     # Inputs: rowToPlace - The row in grid where the nop should be stuck in
     # Outputs: Inserts a nop instruction at the proper space in the grid
     def insertNop(self, rowToPlace):
 
-        self.initNewGridRow("nop")
+        pass
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
