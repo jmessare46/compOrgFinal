@@ -34,8 +34,9 @@ import sys
 
 # Check proper number of params were passed to the program
 if len(sys.argv) != 3:
-
+    # TODO: print out specific error message
     # Exit with error if wrong number of parameters were passed
+    print("Error: Incorrect Arguments!", file=sys.stderr)
     exit(1)
 
 # Assign params to variables
