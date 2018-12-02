@@ -377,8 +377,7 @@ class Grid:
             # Second split get each register
             a, b, c = operands.split(',')
         else:
-            a, b, c = " ", " ", " "
+            a, b, c = None, None, None
             instr = "nop"
-
 
         return instr, a, b, c
