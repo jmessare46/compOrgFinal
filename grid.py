@@ -109,13 +109,8 @@ class Grid:
 
         retVal = False
 
-        # Skip any nop instructions
-        if self.grid[gridRowIndex][0] == "nop":
-
-            pass
-
         # First instruction can't be dependent
-        elif gridRowIndex == 0:
+        if gridRowIndex == 0:
 
             pass
 
@@ -140,6 +135,20 @@ class Grid:
 
         return retVal
 
+    def insertBubble(self, nopRowIndex):
+
+        # Locate '*' in nop row to obtain index
+        starIndex = self.getIndex(self.grid[nopRowIndex], '*')
+
+        # Insert bubble in each row after that
+        for i in range(nopRowIndex + 1, len(self.grid)):
+
+            # Collect value to duplicate
+            valToDupe = self.grid[i][starIndex - 1]
+
+            # Duplicate it
+            self.grid[i].insert(starIndex, valToDupe)
+
     # Advance grid row to next pipeline cycle
     # Inputs: A grid row index to operate on
     # Outputs: Updates that grid row to next pipeline cycle
@@ -157,7 +166,15 @@ class Grid:
             # TODO: Use this when the bubble is created
             # del self.grid[gridRowIndex][16]
 
-            if "MEM" in self.grid[gridRowIndex]:
+            # Handle adding stars to nop instructions
+            if "nop" in self.grid[gridRowIndex]:
+
+                # If this is a nop row but it has less than 3 stars add a star
+                if self.grid[gridRowIndex].count("*") < 3:
+
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+
+            elif "MEM" in self.grid[gridRowIndex]:
 
                 self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "MEM") + 1, "WB")
 
@@ -171,31 +188,24 @@ class Grid:
             elif "ID" in self.grid[gridRowIndex]:
 
                 # Before advancing instruction to EX check previous two instructions to see if dependency exists
-                # TODO: Check for dependencies here using checkForDependency() and insert nops and bubbles if needed
-                # TODO: insert nop here
-
                 dep = self.checkForDependency(gridRowIndex, b, c)
-                # If this is the first time insert a nop
-                if(dep and "nop" not in self.grid[gridRowIndex]):
+
+                # If a dependency is found we must insert nop and bubbles
+                if dep:
+
+                    # Insert nop row to current index
                     tempLine = list.copy(self.grid[gridRowIndex])
                     tempLine[0] = "nop"
                     self.grid.insert(gridRowIndex, tempLine)
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "*")
-                elif(dep or "nop" in self.grid[gridRowIndex]):
-                    if(self.grid[gridRowIndex].count("*") >= 3):
-                        retValue = True
-                    else:
-                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+
+                    # Insert bubbles in each row after nop
+                    self.insertBubble(gridRowIndex)
+
+                # Else no dependency is found advance pipeline as normal
                 else:
-                    # Stall operation
-                    index = self.getIndex(self.grid[gridRowIndex], "ID") + 1
-                    if(("nop" in self.grid[gridRowIndex-1]) and (self.grid[gridRowIndex-1][index] == "*")):
-                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "ID")
 
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
-                # if checkForDependency() returns true so insert nop and bubbles into any rows after
-
-                # else checkForDependency() returns false just proceed as normal
 
             elif "IF" in self.grid[gridRowIndex]:
 
@@ -258,14 +268,6 @@ class Grid:
             # TODO: Make this work.
 
         # TODO: Finish implementing other instructions
-
-    # TODO: Implement this function
-    # Insert a nop instruction into the grid
-    # Inputs: rowToPlace - The row in grid where the nop should be stuck in
-    # Outputs: Inserts a nop instruction at the proper space in the grid
-    def insertNop(self, rowToPlace):
-
-        pass
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
