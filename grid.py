@@ -7,10 +7,6 @@ class Grid:
                                                 #  (need to maintain for branches)
         self.cycle = 1                          # Keeps track of current cycle of simulation
         self.values = {                         # Dictionary which contains the value stored in each register
-            "$a0": 0,
-            "$a1": 0,
-            "$a2": 0,
-            "$a3": 0,
             "$s0": 0,
             "$s1": 0,
             "$s2": 0,
@@ -29,9 +25,28 @@ class Grid:
             "$t7": 0,
             "$t8": 0,
             "$t9": 0,
-            "$zero": 0,
-            "$v0": 0,
-            "$v1": 0
+            "$zero": 0
+        }
+        self.forwardingBus = {                  # Dictionary to keep track of if a register is available to be forwarded
+            "$s0": False,
+            "$s1": False,
+            "$s2": False,
+            "$s3": False,
+            "$s4": False,
+            "$s5": False,
+            "$s6": False,
+            "$s7": False,
+            "$t0": False,
+            "$t1": False,
+            "$t2": False,
+            "$t3": False,
+            "$t4": False,
+            "$t5": False,
+            "$t6": False,
+            "$t7": False,
+            "$t8": False,
+            "$t9": False,
+            "$zero": False
         }
 
     # Prints a bar of '-' to output
@@ -103,8 +118,6 @@ class Grid:
     #         possibleDep1 - The 'b' register
     #         possibleDep2 - The 'c' register
     # Outputs: Returns an integer indicating how many instructions cycles the dependency will take to clear
-    # TODO: TEST this function
-    # TODO: Account for nop here
     def checkForDependency(self, gridRowIndex, possibleDep1, possibleDep2):
 
         retVal = 0
@@ -139,6 +152,9 @@ class Grid:
 
         return retVal
 
+    # Inserts bubbles into any rows that occur after a nop row
+    # Inputs: nopRowIndex - The index of the nop row
+    # Outputs: Bubbles are inserted into all rows after the nop row
     def insertBubble(self, nopRowIndex):
 
         # Locate '*' in nop row to obtain index
@@ -156,6 +172,9 @@ class Grid:
                 # Duplicate it
                 self.grid[i].insert(starIndex, valToDupe)
 
+    # Returns a nop row template initialized to the correct spot
+    # Inputs: cycleToStartOn - Determines which cycle the "IF" instruction lands on
+    # Outputs: returns a nop row
     def getNopRow(self, cycleToStartOn):
 
         row = []
