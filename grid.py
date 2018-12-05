@@ -1,10 +1,12 @@
 class Grid:
-    def __init__(self, forwardingMode):
+    def __init__(self, forwardingMode, fileName):
         self.forwardingMode = forwardingMode    # Forwarding mode for simulation
         self.instructions = []                  # A list containing the set of instructions
         self.grid = []                          # 2d array which holds each row to be printed
         self.instructionIndex = 0               # Keeps track of which instruction we are running
                                                 #  (need to maintain for branches)
+        self.file = fileName                    # Name of file to be read with bne or beq
+        self.loopVar = None                     # Variable to return to on loop
         self.cycle = 1                          # Keeps track of current cycle of simulation
         self.values = {                         # Dictionary which contains the value stored in each register
             "$s0": 0,
@@ -316,19 +318,29 @@ class Grid:
                 self.values[a] = 0
 
         elif inst == "beq":
-            return
+            if self.values[a] == self.values[b]:
+                return c
+            else:
+                return "cont"
             # TODO: Make this work
 
         elif inst == "bne":
-            return
+            if self.values[a] != self.values[b]:
+                return c
+            else:
+                return "cont"
             # TODO: Make this work.
+
+        return None
 
         # TODO: Finish implementing other instructions
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
     # Outputs: Prints the entire output for the program
-    def runSimulation(self):
+    def runSimulation(self, fp):
+
+        self.fp = fp
 
         # Print simulation header
         if self.forwardingMode == 'N':
@@ -343,6 +355,8 @@ class Grid:
 
         while True:
 
+            loop = None
+
             # Add a pipeline cycle to previously ran lines already in grid
             for i in range(0, len(self.grid)):
 
@@ -352,7 +366,59 @@ class Grid:
                 # If an instruction has reached WB stage then update 'a' register value for that instruction
                 if wbReached:
 
-                    self.executeInstruction(self.grid[i][0])
+                    loop = self.executeInstruction(self.grid[i][0])         # Loop is set to continue or revert to branch based on bne beq
+                    # TODO: Finish this
+                    if self.loopVar != None and isinstance(loop, str) and self.loopVar not in loop:
+
+                        # Continue on after bne or beq
+                        with open(self.file) as fp:
+
+                            for line in fp:
+
+                                # Strip newline
+                                line = line.rstrip('\n')
+
+                                # Checks for branches
+                                # Insert line into instruction list
+                                # Inputs: line to be inserted into instruction list
+                                # Outputs: updates instruction list
+                                if (line.__contains__(':')):
+                                    self.loopVar = line.split(':', 1)[0]
+                                else:
+                                    if (self.loopVar != None) and (self.loopVar in line):
+                                        self.instructions.append(line)
+                                        break
+                                    else:
+                                        self.instructions.append(line)
+
+                    else:
+                        # Go back to loop variable start location
+
+                        read = None  # Whether or not to read lines in
+                        with open(self.file) as fp:
+                            for line in fp:
+
+                                # Strip newline
+                                line = line.rstrip('\n')
+
+                                # TODO: This might not be right
+                                if (line.__contains__(':')):
+                                    self.loopVar = line.split(':', 1)[0]
+
+                                # Checks for branches
+                                # Insert line into instruction list
+                                # Inputs: line to be inserted into instruction list
+                                # Outputs: updates instruction list
+                                if self.loopVar != None and line.__contains__(':') and self.loopVar in line:
+                                    read = True
+                                elif read:
+                                    if self.loopVar in line:
+                                        self.instructions.append(line)
+                                        self.loopVar = None  # Resets loop variable
+                                        break
+                                    else:
+                                        self.instructions.append(line)
+
 
             # Append line for this cycle to grid if there are still instructions left to add
             if self.instructionIndex != len(self.instructions):
@@ -385,8 +451,11 @@ class Grid:
     # Inputs: line to be inserted into instruction list
     # Outputs: updates instruction list
     def insertLine(self, line):
+        if(line.__contains__(':')):
+            loopEnd = line.split(':', 1)[0]
 
-        self.instructions.append(line)
+        else:
+            self.instructions.append(line)
 
     # Prints out a single cycle of the grid out
     # Input: cycle - The cycle number we are print (to determine visibility)

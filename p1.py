@@ -12,19 +12,29 @@ if len(sys.argv) != 3:
 forwardingMode = sys.argv[1]
 inFileName = sys.argv[2]
 
-# Instantiate Grid object
-grid = grid.Grid(forwardingMode)
-
 # Read lines into grid
 with open(inFileName) as fp:
+
+    # Instantiate Grid object
+    grid = grid.Grid(forwardingMode, inFileName)
 
     for line in fp:
 
         # Strip newline
         line = line.rstrip('\n')
 
-        # Insert into grid
-        grid.insertLine(line)
+        # Checks for branches
+        # Insert line into instruction list
+        # Inputs: line to be inserted into instruction list
+        # Outputs: updates instruction list
+        if (line.__contains__(':')):
+            grid.loopVar = line.split(':', 1)[0]
+        else:
+            if (grid.loopVar != None) and (grid.loopVar in line):
+                grid.instructions.append(line)
+                break
+            else:
+                grid.instructions.append(line)
 
 # Print all output
-grid.runSimulation()
+grid.runSimulation( fp )
