@@ -86,10 +86,6 @@ class Grid:
                                                 #  (need to maintain for branches)
         self.cycle = 1                          # Keeps track of current cycle of simulation
         self.values = {                         # Dictionary which contains the value stored in each register
-            "$a0": 0,
-            "$a1": 0,
-            "$a2": 0,
-            "$a3": 0,
             "$s0": 0,
             "$s1": 0,
             "$s2": 0,
@@ -108,9 +104,28 @@ class Grid:
             "$t7": 0,
             "$t8": 0,
             "$t9": 0,
-            "$zero": 0,
-            "$v0": 0,
-            "$v1": 0
+            "$zero": 0
+        }
+        self.forwardingBus = {                  # Dictionary to keep track of if a register is available to be forwarded
+            "$s0": False,
+            "$s1": False,
+            "$s2": False,
+            "$s3": False,
+            "$s4": False,
+            "$s5": False,
+            "$s6": False,
+            "$s7": False,
+            "$t0": False,
+            "$t1": False,
+            "$t2": False,
+            "$t3": False,
+            "$t4": False,
+            "$t5": False,
+            "$t6": False,
+            "$t7": False,
+            "$t8": False,
+            "$t9": False,
+            "$zero": False
         }
 
     # Prints a bar of '-' to output
@@ -181,20 +196,13 @@ class Grid:
     # Inputs: gridRowIndex - The row index of the instruction we are working on
     #         possibleDep1 - The 'b' register
     #         possibleDep2 - The 'c' register
-    # Outputs: Returns a bool indicating if a dependency exist
-    # TODO: TEST this function
-    # TODO: Account for nop here
+    # Outputs: Returns an integer indicating how many instructions cycles the dependency will take to clear
     def checkForDependency(self, gridRowIndex, possibleDep1, possibleDep2):
 
-        retVal = False
-
-        # Skip any nop instructions
-        if self.grid[gridRowIndex][0] == "nop":
-
-            pass
+        retVal = 0
 
         # First instruction can't be dependent
-        elif gridRowIndex == 0:
+        if gridRowIndex == 0:
 
             pass
 
@@ -205,7 +213,7 @@ class Grid:
 
             if a == possibleDep1 or a == possibleDep2:
 
-                retVal = True
+                retVal = 1
 
         # Third instruction or greater look at previous 2 lines
         elif gridRowIndex > 1:
@@ -213,11 +221,71 @@ class Grid:
             inst, a, b, c = self.stripLine(self.grid[gridRowIndex - 1][0])
             inst1, a1, b1, c1 = self.stripLine(self.grid[gridRowIndex - 2][0])
 
-            if a == possibleDep1 or a == possibleDep2 or a1 == possibleDep1 or a1 == possibleDep2:
+            if a1 == possibleDep1 or a1 == possibleDep2:
 
-                retVal = True
+                retVal = 1
+
+            if a == possibleDep1 or a == possibleDep2:
+
+                retVal = 2
 
         return retVal
+
+    # Inserts bubbles into any rows that occur after a nop row
+    # Inputs: nopRowIndex - The index of the nop row
+    # Outputs: Bubbles are inserted into all rows after the nop row
+    def insertBubble(self, nopRowIndex):
+
+        # Locate '*' in nop row to obtain index
+        starIndex = self.getIndex(self.grid[nopRowIndex], '*')
+
+        # Insert bubble in each row after that
+        for i in range(nopRowIndex + 1, len(self.grid)):
+
+            # Only operate if row is not a nop row
+            if self.grid[i][0] != "nop":
+
+                # Collect value to duplicate
+                valToDupe = self.grid[i][starIndex - 1]
+
+                # Duplicate it
+                self.grid[i].insert(starIndex, valToDupe)
+
+    # Returns a nop row template initialized to the correct spot
+    # Inputs: cycleToStartOn - Determines which cycle the "IF" instruction lands on
+    # Outputs: returns a nop row
+    def getNopRow(self, cycleToStartOn):
+
+        row = []
+        count = 0
+
+        # First append instruction into index 0
+        row.append("nop")
+
+        count += 1
+
+        # Next append '.' and 'IF' for remaining indexes
+        while count <= 16:
+
+            if count == cycleToStartOn:
+
+                row.append("IF")
+
+            elif count == cycleToStartOn + 1:
+
+                row.append("ID")
+
+            elif count == cycleToStartOn + 2:
+
+                row.append("*")
+
+            else:
+
+                row.append('.')
+
+            count += 1
+
+        return row
 
     # Advance grid row to next pipeline cycle
     # Inputs: A grid row index to operate on
@@ -236,7 +304,15 @@ class Grid:
             # TODO: Use this when the bubble is created
             # del self.grid[gridRowIndex][16]
 
-            if "MEM" in self.grid[gridRowIndex]:
+            # Handle adding stars to nop instructions
+            if "nop" in self.grid[gridRowIndex]:
+
+                # If this is a nop row but it has less than 3 stars add a star
+                if self.grid[gridRowIndex].count("*") < 3:
+
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+
+            elif "MEM" in self.grid[gridRowIndex]:
 
                 self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "MEM") + 1, "WB")
 
@@ -250,31 +326,21 @@ class Grid:
             elif "ID" in self.grid[gridRowIndex]:
 
                 # Before advancing instruction to EX check previous two instructions to see if dependency exists
-                # TODO: Check for dependencies here using checkForDependency() and insert nops and bubbles if needed
-                # TODO: insert nop here
-
                 dep = self.checkForDependency(gridRowIndex, b, c)
-                # If this is the first time insert a nop
-                if(dep and "nop" not in self.grid[gridRowIndex]):
-                    tempLine = list.copy(self.grid[gridRowIndex])
-                    tempLine[0] = "nop"
-                    self.grid.insert(gridRowIndex, tempLine)
-                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "*")
-                elif(dep or "nop" in self.grid[gridRowIndex]):
-                    if(self.grid[gridRowIndex].count("*") >= 3):
-                        retValue = True
-                    else:
-                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+
+                # If a dependency is found we must insert nop and bubbles
+                if dep:
+
+                    # Insert nop row to current index
+                    self.grid.insert(gridRowIndex, self.getNopRow(self.cycle - 2))
+
+                    # Insert bubbles in each row after nop
+                    self.insertBubble(gridRowIndex)
+
+                # Else no dependency is found advance pipeline as normal
                 else:
-                    # Stall operation
-                    index = self.getIndex(self.grid[gridRowIndex], "ID") + 1
-                    if(("nop" in self.grid[gridRowIndex-1]) and (self.grid[gridRowIndex-1][index] == "*")):
-                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "ID")
 
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
-                # if checkForDependency() returns true so insert nop and bubbles into any rows after
-
-                # else checkForDependency() returns false just proceed as normal
 
             elif "IF" in self.grid[gridRowIndex]:
 
@@ -337,14 +403,6 @@ class Grid:
             # TODO: Make this work.
 
         # TODO: Finish implementing other instructions
-
-    # TODO: Implement this function
-    # Insert a nop instruction into the grid
-    # Inputs: rowToPlace - The row in grid where the nop should be stuck in
-    # Outputs: Inserts a nop instruction at the proper space in the grid
-    def insertNop(self, rowToPlace):
-
-        pass
 
     # Main loop that prints out every iteration of output by calling printGrid in a loop
     # Inputs: None
@@ -456,9 +514,8 @@ class Grid:
             # Second split get each register
             a, b, c = operands.split(',')
         else:
-            a, b, c = " ", " ", " "
+            a, b, c = None, None, None
             instr = "nop"
-
 
         return instr, a, b, c
 >>>>>>> master
