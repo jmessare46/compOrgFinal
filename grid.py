@@ -138,6 +138,10 @@ class Grid:
 
                 retVal = 1
 
+            if self.forwardingMode == 'F' and self.forwardingBus[a] == True:
+
+                retVal = 0
+
         # Third instruction or greater look at previous 2 lines
         elif gridRowIndex > 1:
 
@@ -151,6 +155,10 @@ class Grid:
             if a == possibleDep1 or a == possibleDep2:
 
                 retVal = 2
+
+            if self.forwardingMode == 'F' and self.forwardingBus[a] == True and self.forwardingBus[a1] == True:
+
+                retVal = 0
 
         return retVal
 
@@ -264,6 +272,9 @@ class Grid:
                 else:
 
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
+
+                    # Make available to be forwarded
+                    self.forwardingBus[a] = True
 
             elif "IF" in self.grid[gridRowIndex]:
 
