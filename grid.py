@@ -285,7 +285,7 @@ class Grid:
 
             elif "IF" in self.grid[gridRowIndex]:
                 # Accounts for branch prediction
-                if self.branchStartLoc is not None and gridRowIndex >= self.branchStartLoc and gridRowIndex < self.branchEndLoc and self.grid[gridRowIndex].count("*") < 3 and self.grid[gridRowIndex - 1].count("*") > 0:
+                if self.branchStartLoc is not None and gridRowIndex >= self.branchStartLoc and gridRowIndex < self.branchEndLoc and self.grid[gridRowIndex].count("*") < 4 and self.grid[gridRowIndex - 1].count("*") > 0:
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "IF") + 1, "*")
                 elif self.grid[gridRowIndex].count("*") == 0:
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "IF") + 1, "ID")
