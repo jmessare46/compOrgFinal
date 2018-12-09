@@ -8,6 +8,7 @@ class Grid:
         self.file = fileName                    # Name of file to be read with bne or beq
         self.loopVar = None                     # Variable to return to on loop
         self.cycle = 1                          # Keeps track of current cycle of simulation
+        self.branchLoc = None                   # Location of where to start inserting * for branch not taken
         self.values = {                         # Dictionary which contains the value stored in each register
             "$s0": 0,
             "$s1": 0,
@@ -217,57 +218,62 @@ class Grid:
     def advanceGridRow(self, gridRowIndex):
 
         retValue = False
+        if self.branchLoc is not None and gridRowIndex >= self.branchLoc:
+            if self.grid[gridRowIndex].count("*") < 3:
+                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+            else:
+                self.branchLoc = None
+        else:
+            # Only operate if row has not already reached "WB" stage
+            if "WB" not in self.grid[gridRowIndex]:
 
-        # Only operate if row has not already reached "WB" stage
-        if "WB" not in self.grid[gridRowIndex]:
+                inst, a, b, c = self.stripLine(self.grid[gridRowIndex][0])
 
-            inst, a, b, c = self.stripLine(self.grid[gridRowIndex][0])
+                # Remove last element of row
+                # TODO: Use this when the bubble is created
+                # del self.grid[gridRowIndex][16]
 
-            # Remove last element of row
-            # TODO: Use this when the bubble is created
-            # del self.grid[gridRowIndex][16]
+                # Handle adding stars to nop instructions
+                if "nop" in self.grid[gridRowIndex]:
 
-            # Handle adding stars to nop instructions
-            if "nop" in self.grid[gridRowIndex]:
+                    # If this is a nop row but it has less than 3 stars add a star
+                    if self.grid[gridRowIndex].count("*") < 3:
 
-                # If this is a nop row but it has less than 3 stars add a star
-                if self.grid[gridRowIndex].count("*") < 3:
+                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
 
-                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+                elif "MEM" in self.grid[gridRowIndex]:
 
-            elif "MEM" in self.grid[gridRowIndex]:
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "MEM") + 1, "WB")
 
-                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "MEM") + 1, "WB")
+                    # Instruction has advanced to WB stage
+                    retValue = True
 
-                # Instruction has advanced to WB stage
-                retValue = True
+                elif "EX" in self.grid[gridRowIndex]:
 
-            elif "EX" in self.grid[gridRowIndex]:
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX") + 1, "MEM")
 
-                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX") + 1, "MEM")
+                elif "ID" in self.grid[gridRowIndex]:
 
-            elif "ID" in self.grid[gridRowIndex]:
+                    # Before advancing instruction to EX check previous two instructions to see if dependency exists
+                    dep = self.checkForDependency(gridRowIndex, b, c)
 
-                # Before advancing instruction to EX check previous two instructions to see if dependency exists
-                dep = self.checkForDependency(gridRowIndex, b, c)
+                    # If a dependency is found we must insert nop and bubbles
+                    if dep:
 
-                # If a dependency is found we must insert nop and bubbles
-                if dep:
+                        # Insert nop row to current index
+                        self.grid.insert(gridRowIndex, self.getNopRow(self.cycle - 2))
 
-                    # Insert nop row to current index
-                    self.grid.insert(gridRowIndex, self.getNopRow(self.cycle - 2))
+                        # Insert bubbles in each row after nop
+                        self.insertBubble(gridRowIndex)
 
-                    # Insert bubbles in each row after nop
-                    self.insertBubble(gridRowIndex)
+                    # Else no dependency is found advance pipeline as normal
+                    else:
 
-                # Else no dependency is found advance pipeline as normal
-                else:
+                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
 
-                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
+                elif "IF" in self.grid[gridRowIndex]:
 
-            elif "IF" in self.grid[gridRowIndex]:
-
-                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "IF") + 1, "ID")
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "IF") + 1, "ID")
 
         return retValue
 
@@ -321,6 +327,7 @@ class Grid:
             if self.values[a] == self.values[b]:
                 return c
             else:
+                self.branchLoc = None
                 return "cont"
             # TODO: Make this work
 
@@ -328,6 +335,7 @@ class Grid:
             if self.values[a] != self.values[b]:
                 return c
             else:
+                self.branchLoc = None
                 return "cont"
             # TODO: Make this work.
 
@@ -368,13 +376,11 @@ class Grid:
 
                     loop = self.executeInstruction(self.grid[i][0])         # Loop is set to continue or revert to branch based on bne beq
                     # TODO: Finish this
-                    if self.loopVar != None and isinstance(loop, str) and self.loopVar not in loop:
+                    if self.loopVar is not None and isinstance(loop, str) and self.loopVar not in loop:
 
                         # Continue on after bne or beq
                         with open(self.file) as fp:
-
                             for line in fp:
-
                                 # Strip newline
                                 line = line.rstrip('\n')
 
@@ -385,9 +391,8 @@ class Grid:
                                 if (line.__contains__(':')):
                                     self.loopVar = line.split(':', 1)[0]
                                 else:
-                                    if (self.loopVar != None) and (self.loopVar in line):
+                                    if (self.loopVar is not None) and (self.loopVar in line):
                                         self.instructions.append(line)
-                                        break
                                     else:
                                         self.instructions.append(line)
 
@@ -409,13 +414,12 @@ class Grid:
                                 # Insert line into instruction list
                                 # Inputs: line to be inserted into instruction list
                                 # Outputs: updates instruction list
-                                if self.loopVar != None and line.__contains__(':') and self.loopVar in line:
+                                if self.loopVar is not None and line.__contains__(':') and self.loopVar in line:
                                     read = True
                                 elif read:
-                                    if self.loopVar in line:
+                                    if self.loopVar is not None and self.loopVar in line:
                                         self.instructions.append(line)
                                         self.loopVar = None  # Resets loop variable
-                                        break
                                     else:
                                         self.instructions.append(line)
 
