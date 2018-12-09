@@ -30,11 +30,13 @@ with open(inFileName) as fp:
         if (line.__contains__(':')):
             grid.loopVar = line.split(':', 1)[0]
         else:
-            if (grid.loopVar != None) and (grid.loopVar in line):
+            if (grid.loopVar is not None) and (grid.loopVar in line):
                 grid.instructions.append(line)
-                break
+                grid.branchStartLoc = len(grid.instructions)
             else:
                 grid.instructions.append(line)
+
+    grid.branchEndLoc = len(grid.instructions)
 
 # Print all output
 grid.runSimulation( fp )

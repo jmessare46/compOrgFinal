@@ -8,7 +8,8 @@ class Grid:
         self.file = fileName                    # Name of file to be read with bne or beq
         self.loopVar = None                     # Variable to return to on loop
         self.cycle = 1                          # Keeps track of current cycle of simulation
-        self.branchLoc = None                   # Location of where to start inserting * for branch not taken
+        self.branchStartLoc = None              # Start location of where to start inserting * for branch not taken
+        self.branchEndLoc = None                # End location of where to start inserting * for branch not taken
         self.values = {                         # Dictionary which contains the value stored in each register
             "$s0": 0,
             "$s1": 0,
@@ -226,64 +227,67 @@ class Grid:
     def advanceGridRow(self, gridRowIndex):
 
         retValue = False
-        if self.branchLoc is not None and gridRowIndex >= self.branchLoc:
-            if self.grid[gridRowIndex].count("*") < 3:
-                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
-            else:
-                self.branchLoc = None
-        else:
-            # Only operate if row has not already reached "WB" stage
-            if "WB" not in self.grid[gridRowIndex]:
 
-                inst, a, b, c = self.stripLine(self.grid[gridRowIndex][0])
+        # Only operate if row has not already reached "WB" stage
+        if "WB" not in self.grid[gridRowIndex]:
 
-                # Remove last element of row
-                # TODO: Use this when the bubble is created
-                # del self.grid[gridRowIndex][16]
+            inst, a, b, c = self.stripLine(self.grid[gridRowIndex][0])
 
-                # Handle adding stars to nop instructions
-                if "nop" in self.grid[gridRowIndex]:
+            # Remove last element of row
+            # TODO: Use this when the bubble is created
+            # del self.grid[gridRowIndex][16]
 
-                    # If this is a nop row but it has less than 3 stars add a star
-                    if self.grid[gridRowIndex].count("*") < 3:
+            # Handle adding stars to nop instructions
+            if "nop" in self.grid[gridRowIndex]:
 
-                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
+                # If this is a nop row but it has less than 3 stars add a star
+                if self.grid[gridRowIndex].count("*") < 3:
 
-                elif "MEM" in self.grid[gridRowIndex]:
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "*") + 1, "*")
 
-                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "MEM") + 1, "WB")
+            elif "MEM" in self.grid[gridRowIndex] and "*" not in self.grid[gridRowIndex]:
+                self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "MEM") + 1, "WB")
 
-                    # Instruction has advanced to WB stage
-                    retValue = True
+                # Instruction has advanced to WB stage
+                retValue = True
 
-                elif "EX" in self.grid[gridRowIndex]:
-
+            elif "EX" in self.grid[gridRowIndex]:
+                # Accounts for branch prediction
+                if self.branchStartLoc is not None and gridRowIndex >= self.branchStartLoc and gridRowIndex < self.branchEndLoc and self.grid[gridRowIndex].count("*") < 2:
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX") + 1, "*")
+                elif self.grid[gridRowIndex].count("*") == 0:
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX") + 1, "MEM")
 
-                elif "ID" in self.grid[gridRowIndex]:
+            elif "ID" in self.grid[gridRowIndex]:
 
-                    # Before advancing instruction to EX check previous two instructions to see if dependency exists
-                    dep = self.checkForDependency(gridRowIndex, b, c)
+                # Before advancing instruction to EX check previous two instructions to see if dependency exists
+                dep = self.checkForDependency(gridRowIndex, b, c)
 
-                    # If a dependency is found we must insert nop and bubbles
-                    if dep:
+                # If a dependency is found we must insert nop and bubbles
+                if dep:
 
-                        # Insert nop row to current index
-                        self.grid.insert(gridRowIndex, self.getNopRow(self.cycle - 2))
+                    # Insert nop row to current index
+                    self.grid.insert(gridRowIndex, self.getNopRow(self.cycle - 2))
 
-                        # Insert bubbles in each row after nop
-                        self.insertBubble(gridRowIndex)
+                    # Insert bubbles in each row after nop
+                    self.insertBubble(gridRowIndex)
 
-                    # Else no dependency is found advance pipeline as normal
-                    else:
-
+                # Else no dependency is found advance pipeline as normal
+                else:
+                    # Accounts for branch prediction
+                    if self.branchStartLoc is not None and gridRowIndex >= self.branchStartLoc and gridRowIndex < self.branchEndLoc and self.grid[gridRowIndex].count("*") < 3 and self.grid[gridRowIndex-1].count("*") > 0:
+                        self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "*")
+                    elif self.grid[gridRowIndex].count("*") == 0:
                         self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
 
                         # Make available to be forwarded
                         self.forwardingBus[a] = True
 
-                elif "IF" in self.grid[gridRowIndex]:
-
+            elif "IF" in self.grid[gridRowIndex]:
+                # Accounts for branch prediction
+                if self.branchStartLoc is not None and gridRowIndex >= self.branchStartLoc and gridRowIndex < self.branchEndLoc and self.grid[gridRowIndex].count("*") < 3 and self.grid[gridRowIndex - 1].count("*") > 0:
+                    self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "IF") + 1, "*")
+                elif self.grid[gridRowIndex].count("*") == 0:
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "IF") + 1, "ID")
 
         return retValue
@@ -417,7 +421,7 @@ class Grid:
                                 # Strip newline
                                 line = line.rstrip('\n')
 
-                                # TODO: This might not be right
+                                # TODO: Fix this so it loops the second time for printing starts
                                 if (line.__contains__(':')):
                                     self.loopVar = line.split(':', 1)[0]
 
@@ -433,6 +437,15 @@ class Grid:
                                         self.loopVar = None  # Resets loop variable
                                     else:
                                         self.instructions.append(line)
+
+                            # Something like this needs to replace the above (need to reset the branch start and end locations to the right place)
+                            #         if (grid.loopVar is not None) and (grid.loopVar in line):
+                            #             grid.instructions.append(line)
+                            #             grid.branchStartLoc = len(grid.instructions)
+                            #         else:
+                            #             grid.instructions.append(line)
+                            #
+                            # grid.branchEndLoc = len(grid.instructions)
 
 
             # Append line for this cycle to grid if there are still instructions left to add
