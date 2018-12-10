@@ -65,11 +65,11 @@ class Grid:
 
         print("{0: <20}".format("CPU Cycles ===>"), end='')
 
-        for i in range(1, 17):
+        for i in range(1, 16):
 
             print("{0: <4}".format(i), end='')
 
-        print()
+        print(16)
 
     # Setup grid row for printing where "IF" is equal to the current cycle
     # Inputs: Takes the instruction from the instructions list
@@ -502,18 +502,19 @@ class Grid:
         regSet = ["$s0","$s1","$s2","$s3","$s4","$s5","$s6","$s7",
                   "$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7","$t8","$t9"]
 
+        print()
+
         for i in range(len(regSet)):
-
-            # If just printed 4th column print a new line
-            if i % 4 == 0:
-
-                print()
 
             strToPrint = "{0} = {1}".format(regSet[i], self.values[regSet[i]])
 
-            print("{0: <20}".format(strToPrint), end='')
+            if i % 4 == 3 or i == 17:
 
-        print()
+                print(strToPrint)
+
+            else:
+
+                print("{0: <20}".format(strToPrint), end='')
 
     # Goes through line and returns what the instruction is and what each operation is
     # Inputs: instruction string
