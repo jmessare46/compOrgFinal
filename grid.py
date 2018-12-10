@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 class Grid:
   def __init__( self ):
     self.grid = []
@@ -76,7 +76,7 @@ class Grid:
     def stripLine( self ):
         return
     
-=======
+
 class Grid:
     def __init__(self, forwardingMode, fileName):
         self.forwardingMode = forwardingMode    # Forwarding mode for simulation
@@ -616,4 +616,3 @@ class Grid:
             instr = "nop"
 
         return instr, a, b, c
->>>>>>> master
