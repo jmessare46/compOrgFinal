@@ -494,10 +494,10 @@ class Grid:
 
             print("{0: <20}".format(row[0]), end='')
 
-            for i in range(1, 17):
+            for i in range(1, 16):
                 print("{0: <4}".format(row[i]), end='')
 
-            print()
+            print(row[16])
 
         regSet = ["$s0","$s1","$s2","$s3","$s4","$s5","$s6","$s7",
                   "$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7","$t8","$t9"]
