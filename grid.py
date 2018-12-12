@@ -89,6 +89,9 @@ class Grid:
         self.cycle = 1                          # Keeps track of current cycle of simulation
         self.branchStartLoc = None              # Start location of where to start inserting * for branch not taken
         self.branchEndLoc = None                # End location of where to start inserting * for branch not taken
+        self.branchLoc = None
+        self.seen_variable = False
+        self.nop_counter = 0
         self.values = {                         # Dictionary which contains the value stored in each register
             "$s0": 0,
             "$s1": 0,
@@ -250,18 +253,35 @@ class Grid:
 
         # Locate '*' in nop row to obtain index
         starIndex = self.getIndex(self.grid[nopRowIndex], '*')
+        # print(starIndex)
 
         # Insert bubble in each row after that
+        index = 0
+        flag_variable = False
+
+        # print(self.grid[nopRowIndex:])
+
         for i in range(nopRowIndex + 1, len(self.grid)):
 
             # Only operate if row is not a nop row
             if self.grid[i][0] != "nop":
 
                 # Collect value to duplicate
+                # if flag_variable == False:
                 valToDupe = self.grid[i][starIndex - 1]
+                flag_variable = True
+                index = i
+                # print("INDEX")
+                # print(self.grid[index])
+                self.grid[index].insert(starIndex, valToDupe)
+        flag_variable = False
 
-                # Duplicate it
-                self.grid[i].insert(starIndex, valToDupe)
+        # Duplicate it
+        # if flag_variable == True:
+        #     self.grid[index].insert(starIndex, valToDupe)
+
+                # # Duplicate it
+                # self.grid[i].insert(starIndex, valToDupe)
 
     # Returns a nop row template initialized to the correct spot
     # Inputs: cycleToStartOn - Determines which cycle the "IF" instruction lands on
@@ -298,6 +318,7 @@ class Grid:
             count += 1
 
         return row
+        # print(count)
 
     # Advance grid row to next pipeline cycle
     # Inputs: A grid row index to operate on
@@ -307,10 +328,13 @@ class Grid:
 
         retValue = False
 
+        # seen_variable = False
+
         # Only operate if row has not already reached "WB" stage
         if "WB" not in self.grid[gridRowIndex]:
 
             inst, a, b, c = self.stripLine(self.grid[gridRowIndex][0])
+
 
             # Remove last element of row
             # TODO: Use this when the bubble is created
@@ -331,33 +355,84 @@ class Grid:
                 retValue = True
 
             elif "EX" in self.grid[gridRowIndex]:
+
+                # print(self.getIndex(self.grid[gridRowIndex], "EX") )
+                # print("here\n")
+                # print(self.branchEndLoc)
+
+                # print(self.grid[gridRowIndex].count("*"))
+                # print("here")
                 # Accounts for branch prediction
                 if self.branchStartLoc is not None and gridRowIndex >= self.branchStartLoc and gridRowIndex < self.branchEndLoc and self.grid[gridRowIndex].count("*") < 2:
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX") + 1, "*")
+                    # print("here")
                 elif self.grid[gridRowIndex].count("*") == 0:
                     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX") + 1, "MEM")
+
+                # elif self.branchStartLoc is not None and gridRowIndex == self.branchEndLoc and self.grid[gridRowIndex].count("*") >= 2:
+                #     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "EX"), "*")
 
             elif "ID" in self.grid[gridRowIndex]:
 
                 # Before advancing instruction to EX check previous two instructions to see if dependency exists
                 dep = self.checkForDependency(gridRowIndex, b, c)
 
+                # seen_variable = False
+
                 # If a dependency is found we must insert nop and bubbles
                 if dep:
-
+                    # print("dependency")
+                    self.nop_counter += 1
                     # Insert nop row to current index
+                if self.nop_counter > 0:
                     self.grid.insert(gridRowIndex, self.getNopRow(self.cycle - 2))
+                    self.nop_counter -= 1
 
                     # Insert bubbles in each row after nop
-                    self.insertBubble(gridRowIndex)
+                    if (self.seen_variable == False):
+                        self.insertBubble(gridRowIndex)
+                    self.seen_variable = True
+                # self.nop_counter -= 1
+
+                    # should stop from doing double cycle
 
                 # Else no dependency is found advance pipeline as normal
                 else:
                     # Accounts for branch prediction
-                    if self.branchStartLoc is not None and gridRowIndex >= self.branchStartLoc and gridRowIndex < self.branchEndLoc and self.grid[gridRowIndex].count("*") < 3 and self.grid[gridRowIndex-1].count("*") > 0:
+                    # print("HERE\n")
+                    # print(self.branchEndLoc)
+                   #  print(gridRowIndex)
+                    if self.branchStartLoc is not None and\
+                            gridRowIndex >= self.branchStartLoc and \
+                            gridRowIndex < self.branchEndLoc and \
+                            self.branchLoc == None and \
+                            self.grid[gridRowIndex].count("*") < 3 and\
+                            self.grid[gridRowIndex-1].count("*") > 0:
                         self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "*")
+
+                    # elif self.branchStartLoc is not None and\
+                    #         gridRowIndex >= self.branchStartLoc and \
+                    #         gridRowIndex < self.branchEndLoc and \
+                    #         self.branchLoc == None and \
+                    #         self.grid[gridRowIndex].count("*") < 3 and\
+                    #         self.grid[gridRowIndex-1].count("*") == 0:
+                    #     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "*")
+
+
+                    # elif self.branchStartLoc is not None and gridRowIndex > self.branchEndLoc and self.grid[gridRowIndex].count("*") < 3 and self.branchLoc != None and self.grid[gridRowIndex-1].count("*") > 0: # and self.grid[gridRowIndex-1].count("*") > 0:
+                    #     self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "*")
+                        # print("here")
+                    #     print(self.branchLoc)
+                    #     print(gridRowIndex)
+                    #     print(self.branchStartLoc)
+                    #     print(self.branchEndLoc)
+
                     elif self.grid[gridRowIndex].count("*") == 0:
                         self.grid[gridRowIndex].insert(self.getIndex(self.grid[gridRowIndex], "ID") + 1, "EX")
+                        # self.branchStartLoc = None
+                        # self.branchEndLoc = None
+                        # print("here")
+                        # print("here?\n")
 
                         # Make available to be forwarded
                         self.forwardingBus[a] = True
@@ -418,7 +493,9 @@ class Grid:
                 self.values[a] = 0
 
         elif inst == "beq":
+            self.branchEndLoc = self.instructionIndex  # len(self.instructions) # CHANGED THIS
             if self.values[a] == self.values[b]:
+                # self.branchLoc = not None  # changed
                 return c
             else:
                 self.branchLoc = None
@@ -426,10 +503,13 @@ class Grid:
             # TODO: Make this work
 
         elif inst == "bne":
+            self.branchEndLoc = self.instructionIndex  #len(self.instructions) # CHANGED THIS
             if self.values[a] != self.values[b]:
+                # self.branchLoc = not None    # changed this
                 return c
             else:
                 self.branchLoc = None
+                # self.branchEndLoc = self.instructionIndex  # CHANGED THIS
                 return "cont"
             # TODO: Make this work.
 
@@ -464,6 +544,8 @@ class Grid:
 
                 # Advance each row in grid to next pipeline stage and capture if the row has reached "WB"
                 wbReached = self.advanceGridRow(i)
+                # self.seen_variable = False
+                # self.nop_counter -= 1
 
                 # If an instruction has reached WB stage then update 'a' register value for that instruction
                 if wbReached:
@@ -475,6 +557,8 @@ class Grid:
                         # Continue on after bne or beq
                         with open(self.file) as fp:
                             for line in fp:
+                                if line.isspace() or line == '':
+                                    continue
                                 # Strip newline
                                 line = line.rstrip('\n')
 
@@ -496,9 +580,15 @@ class Grid:
                         read = None  # Whether or not to read lines in
                         with open(self.file) as fp:
                             for line in fp:
+                                if line.isspace() or line == '':
+                                    continue
+                                # print("This line is: \n", line)
 
                                 # Strip newline
                                 line = line.rstrip('\n')
+
+                                # if (line):
+                                #     continue
 
                                 # TODO: Fix this so it loops the second time for printing starts
                                 if (line.__contains__(':')):
@@ -513,7 +603,7 @@ class Grid:
                                 elif read:
                                     if self.loopVar is not None and self.loopVar in line:
                                         self.instructions.append(line)
-                                        self.loopVar = None  # Resets loop variable
+                                        # self.loopVar = None  # Resets loop variable
                                     else:
                                         self.instructions.append(line)
 
@@ -541,6 +631,8 @@ class Grid:
             self.printCPUCyclesLine()
             self.printGrid()
             self.printBar()
+
+            self.seen_variable = False
 
             # Inc cycle counter
             self.cycle += 1

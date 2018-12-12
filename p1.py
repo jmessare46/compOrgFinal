@@ -54,6 +54,11 @@ with open(inFileName) as fp:
         # Strip newline
         line = line.rstrip('\n')
 
+        if line.isspace() or line == '':
+            continue
+
+        # print("printing in main\n")
+
         # Checks for branches
         # Insert line into instruction list
         # Inputs: line to be inserted into instruction list
@@ -67,7 +72,7 @@ with open(inFileName) as fp:
             else:
                 grid.instructions.append(line)
 
-    grid.branchEndLoc = len(grid.instructions)
+        grid.branchEndLoc = len(grid.instructions)
 
 # Print all output
 
